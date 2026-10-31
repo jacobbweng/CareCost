@@ -17,17 +17,17 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 // ── Status indicators: always icon + text, never color alone ──
 
 const STATUS_STYLE: Record<MatchStatus, { cls: string; icon: ReactNode; text: string }> = {
-  meets: { cls: 'bg-pine-100 text-pine-900 ring-1 ring-pine-200', icon: <CircleCheck aria-hidden className="h-4 w-4" />, text: 'Meets requirements' },
-  needs_verification: { cls: 'bg-amberx-100 text-amberx-800 ring-1 ring-[#5c4512]', icon: <CircleQuestionMark aria-hidden className="h-4 w-4" />, text: 'Needs verification' },
-  does_not_meet: { cls: 'bg-rust-50 text-rust-800 ring-1 ring-rust-100', icon: <CircleX aria-hidden className="h-4 w-4" />, text: 'Does not meet requirements' },
+  meets: { cls: 'bg-pine-100 text-pine-900 ring-1 ring-pine-200', icon: <CircleCheck aria-hidden className="h-4 w-4" />, text: 'Has your must-haves' },
+  needs_verification: { cls: 'bg-amberx-100 text-amberx-800 ring-1 ring-[#5c4512]', icon: <CircleQuestionMark aria-hidden className="h-4 w-4" />, text: 'Call to check' },
+  does_not_meet: { cls: 'bg-rust-50 text-rust-800 ring-1 ring-rust-100', icon: <CircleX aria-hidden className="h-4 w-4" />, text: 'Missing a must-have' },
 };
 
-export function StatusBadge({ status, compact }: { status: MatchStatus; compact?: boolean }) {
+export function StatusBadge({ status }: { status: MatchStatus; compact?: boolean }) {
   const s = STATUS_STYLE[status];
   return (
     <span className={cx('chip', s.cls)}>
       {s.icon}
-      {compact ? s.text.replace(' requirements', '') : s.text}
+      {s.text}
     </span>
   );
 }
@@ -38,7 +38,7 @@ export function AccStatusIcon({ status }: { status: AccStatus }) {
   return <CircleQuestionMark aria-hidden className="h-5 w-5 shrink-0 text-amberx-700" />;
 }
 
-export const ACC_STATUS_TEXT: Record<AccStatus, string> = { yes: 'Available', no: 'Not available', unknown: 'Unknown' };
+export const ACC_STATUS_TEXT: Record<AccStatus, string> = { yes: 'Yes', no: 'No', unknown: 'Unknown' };
 
 export function SourceTag({ source, date }: { source: InfoSource; date?: string }) {
   const stale = isStale(date);
@@ -58,10 +58,17 @@ export function SourceTag({ source, date }: { source: InfoSource; date?: string 
         {stale && <span className="text-amberx-700"> (over 1 year old)</span>}
       </span>
     );
+  if (source === 'community')
+    return (
+      <span className="inline-flex items-center gap-1 text-[0.8rem] font-medium text-ink-600">
+        <MessageSquare aria-hidden className="h-3.5 w-3.5" />
+        Mapped by OpenStreetMap volunteers
+      </span>
+    );
   return (
     <span className="inline-flex items-center gap-1 text-[0.8rem] font-medium text-ink-500">
       <CircleDashed aria-hidden className="h-3.5 w-3.5" />
-      No information on file
+      Not on record — ask
     </span>
   );
 }
@@ -378,7 +385,7 @@ export function SyntheticNote({ className }: { className?: string }) {
   return (
     <p className={cx('inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-ink-600', className)}>
       <Info aria-hidden className="h-3.5 w-3.5" />
-      Synthetic demo data — not a real provider.
+      Details from OpenStreetMap. Confirm by phone.
     </p>
   );
 }

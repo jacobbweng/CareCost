@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AppLayout, NAV } from './components/Layout';
+import { LocationSection } from './components/ProfileSections';
+import { PageHeader } from './components/ui';
 import { Splash } from './components/Motion';
 import { AccessMap } from './pages/AccessMap';
 import { Compare } from './pages/Compare';
@@ -15,10 +17,23 @@ import { ProviderDetail } from './pages/ProviderDetail';
 import { href, useRoute } from './state/router';
 import { StoreProvider, useStore } from './state/store';
 
+function NeedsLocation() {
+  const { profile, setProfile } = useStore();
+  return (
+    <>
+      <PageHeader eyebrow="First step" title="Where are you?">Tell us where you are and we’ll find clinics near you.</PageHeader>
+      <div className="panel max-w-2xl p-6 md:p-8">
+        <LocationSection value={profile} onChange={(p) => setProfile((x) => ({ ...x, ...p }))} />
+      </div>
+      <p className="mt-6"><a className="btn-secondary" href={href('/start')}>Or do the full setup</a></p>
+    </>
+  );
+}
+
 function Routes() {
   const route = useRoute();
   const { path, parts, query } = route;
-  const { summary } = useStore();
+  const { summary, profile } = useStore();
   const announce = useRef<HTMLParagraphElement>(null);
   const first = useRef(true);
 
@@ -45,7 +60,9 @@ function Routes() {
   if (path === '/start') return <>{live}<Onboarding /></>;
 
   let page;
-  switch (parts[0]) {
+  const gated = !profile.location && !['map', 'profile', 'insurance'].includes(parts[0] ?? '');
+  switch (gated ? '__setup' : parts[0]) {
+    case '__setup': page = <NeedsLocation />; break;
     case 'dashboard': page = <Dashboard />; break;
     case 'find': page = <FindCare />; break;
     case 'provider': page = <ProviderDetail key={parts[1]} id={parts[1] ?? ''} />; break;

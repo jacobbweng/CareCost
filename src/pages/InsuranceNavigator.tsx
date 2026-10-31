@@ -1,14 +1,11 @@
 import { Check, Copy, FileSearch, ListChecks, Sparkles, TriangleAlert } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { InsuranceSection } from '../components/ProfileSections';
-import { Callout, NetworkBadge, PageHeader, StatusBadge, cx } from '../components/ui';
+import { Callout, PageHeader, cx } from '../components/ui';
 import { PLAN_BY_ID } from '../data/plans';
-import { SPECIALTY_BY_ID } from '../data/providers';
 import { aiAvailable, explainPolicyWithAI } from '../lib/ai';
-import { usd } from '../lib/format';
 import { SAMPLE_POLICY, TERMS, analyzePolicy, type PolicyAnalysis } from '../lib/policy';
 import type { Profile } from '../lib/types';
-import { href } from '../state/router';
 import { useStore } from '../state/store';
 
 const KIND_STYLE: Record<string, string> = {
@@ -22,7 +19,6 @@ const KIND_LABEL: Record<string, string> = { cost: 'Cost term', requirement: 'Re
 export function InsuranceNavigator() {
   const { profile, setProfile, summary } = useStore();
   const plan = PLAN_BY_ID[profile.planId];
-  const spec = SPECIALTY_BY_ID[profile.specialty];
   const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState<PolicyAnalysis | null>(null);
   const [analyzedText, setAnalyzedText] = useState('');
@@ -64,44 +60,10 @@ export function InsuranceNavigator() {
         Check which providers appear to accept your plan, estimate your share, and turn dense benefits language into plain words and clear questions.
       </PageHeader>
 
-      {/* Network overview */}
       <section className="panel mb-6 p-6" aria-labelledby="net-h">
-        <h2 id="net-h" className="text-xl font-bold">{spec.label} providers and {plan.name}</h2>
-        {!hasPlan ? (
-          <p className="mt-2 text-ink-700">
-            {plan.method === 'self_pay' ? 'You chose self-pay, so estimates use each clinic’s listed self-pay price.' : 'Choose a sample plan or enter your own details below to see network status and estimates.'}
-          </p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-[0.95rem]">
-              <caption className="sr-only">Network status and estimated medical share by provider</caption>
-              <thead>
-                <tr className="border-b border-line text-sm text-ink-600">
-                  <th scope="col" className="py-2 pr-3 font-semibold">Provider</th>
-                  <th scope="col" className="py-2 pr-3 font-semibold">Accessibility</th>
-                  <th scope="col" className="py-2 pr-3 font-semibold">Network</th>
-                  <th scope="col" className="py-2 pr-3 text-right font-semibold">Est. medical share</th>
-                  <th scope="col" className="py-2 font-semibold">What to check</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.results.map((r) => (
-                  <tr key={r.provider.id} className="border-b border-line/70 align-top">
-                    <th scope="row" className="py-3 pr-3 font-semibold"><a href={href(`/provider/${r.provider.id}`)} className="hover:underline">{r.provider.name}</a></th>
-                    <td className="py-3 pr-3"><StatusBadge status={r.status} compact /></td>
-                    <td className="py-3 pr-3"><NetworkBadge network={r.network} /></td>
-                    <td className="num py-3 pr-3 text-right font-semibold">{usd(r.cost.medical)}{r.cost.medicalHigh > r.cost.medical + 0.5 && <span className="block text-xs font-normal text-ink-600">up to {usd(r.cost.medicalHigh)}</span>}</td>
-                    <td className="py-3 text-sm text-ink-700">
-                      {r.network === 'in' ? 'Confirm the clinician (not just the clinic) is in network.' : r.network === 'out' ? (plan.outOfNetworkCovered ? 'Ask what the plan pays out of network and about balance billing.' : 'Not covered out of network in this sample plan.') : 'Ask both the clinic and insurer.'}
-                      {plan.referralRequired && ' Referral needed.'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mt-3 text-sm text-ink-600">{plan.priorAuthNote} Network listings are synthetic sample data and can change — always confirm before booking.</p>
-          </div>
-        )}
+        <h2 id="net-h" className="text-xl font-bold">Does the clinic take my insurance?</h2>
+        <p className="mt-2 max-w-2xl text-ink-700">Insurers don’t publish their networks in a way we can check, so ask when you call. Your visit plan includes the exact words to use.</p>
+        <p className="mt-3 text-sm text-ink-600">{plan.priorAuthNote}</p>
       </section>
 
       <details className="panel group mb-6" open={!hasPlan}>
@@ -124,7 +86,7 @@ export function InsuranceNavigator() {
         <textarea id="policy" className="input min-h-[180px] font-mono text-[0.9rem] leading-relaxed" value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste text here, or load the fictional sample." />
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" className="btn-primary" disabled={!text.trim()} onClick={run}><ListChecks aria-hidden className="h-4 w-4" /> Analyze text</button>
-          <button type="button" className="btn-secondary" onClick={() => setText(SAMPLE_POLICY)}>Load sample text (fictional plan)</button>
+          <button type="button" className="btn-secondary" onClick={() => setText(SAMPLE_POLICY)}>Try an example</button>
           {text && <button type="button" className="btn-ghost" onClick={() => { setText(''); setAnalysis(null); }}>Clear</button>}
         </div>
 
@@ -221,12 +183,12 @@ export function InsuranceNavigator() {
               {aiAvailable() && (
                 <div className="rounded-xl2 border border-pine-200 bg-pine-50/60 p-5">
                   <h3 className="flex items-center gap-2 font-bold"><Sparkles aria-hidden className="h-5 w-5 text-pine-700" /> Optional: AI plain-language summary</h3>
-                  <p className="mt-1 text-sm text-ink-700">This sends the text above (not your profile) to Anthropic&rsquo;s Claude API. Remove anything personal first.</p>
+                  <p className="mt-1 text-sm text-ink-700">Sends only the text above to DeepSeek — not your profile. Remove anything personal first.</p>
                   <button type="button" className="btn-secondary mt-3" disabled={ai.state === 'loading'} onClick={async () => {
                     setAi({ state: 'loading', text: '' });
                     try { setAi({ state: 'done', text: await explainPolicyWithAI(analyzedText) }); } catch (e) { setAi({ state: 'error', text: (e as Error).message }); }
                   }}>
-                    {ai.state === 'loading' ? 'Asking Claude…' : 'Send text to Claude for a summary'}
+                    {ai.state === 'loading' ? 'Asking AI…' : 'Explain with AI'}
                   </button>
                   {ai.state === 'done' && <div className="mt-4 whitespace-pre-wrap rounded-xl bg-surface p-4 text-[0.95rem] leading-relaxed ring-1 ring-line">{ai.text}<p className="mt-3 text-xs text-ink-500">AI-generated summary — may contain errors. Not a coverage decision.</p></div>}
                   {ai.state === 'error' && <p className="mt-3 text-sm font-semibold text-rust-700">{ai.text}</p>}

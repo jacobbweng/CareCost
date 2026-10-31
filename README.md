@@ -6,7 +6,7 @@ An AI-powered healthcare navigation platform helping people with disabilities fi
 
 CareCost is a disability-aware healthcare navigator that finds providers who can actually accommodate a patient's accessibility needs, then ranks them by the *true cost of access* — the medical bill plus what it really takes to get there.
 
-> **Demo data notice:** every provider, address, phone number, price, insurance plan, network status and accessibility record in this repository is **synthetic**. Phone numbers use the reserved fictional 555-01xx range. Nothing here describes a real clinic or insurer.
+> **Real data:** clinics and wheelchair access come live from OpenStreetMap, road distances and drive times from OSRM, prices from the 2026 Medicare Physician Fee Schedule, and payer rules from public sources (see *Data sources*). Every cost is an estimate, and anything not publicly known — exam-room access, insurer networks — is shown as unknown, never guessed.
 
 ---
 
@@ -40,15 +40,28 @@ People with disabilities — mobility, hearing, vision, sensory and cognitive �
 
 | Feature | What it does |
 |---|---|
-| **Accessibility Profile** (guided 5-step onboarding + editable profile page) | ZIP, specialty, 20 individual accommodations in 4 categories, each marked *Essential* or *Preferred*; optional plain-language "describe your needs" parser; insurance; budget; travel mode; voluntary extra costs. |
-| **Find Care** | Results grouped as **Meets requirements / Needs verification / Does not meet requirements**, each with per-requirement status, information source (verified on site / provider-reported / no information) and date, plain-language reasons and cautions. Filters: specialty, sort, max total cost, in-network, distance. |
-| **Provider detail** | Full accessibility record by category, cost breakdown, practical details, and a transparent score breakdown. |
-| **Provider Comparison** | 2–4 providers side by side: costs, distance, insurance, every selected accommodation with source, outstanding verification items, an auto-generated trade-off verdict and a stacked cost chart. |
-| **Cost Calculator** | Editable cost components with reset-to-estimate, the formula rendered with live numbers, both insurance models computed side by side with step-by-step math, editable travel assumptions and a medical-only vs. true-cost chart (with data-table toggle). |
-| **Insurance Navigator** | Network status and estimated share for every provider under the selected plan; benefits-text analyzer that highlights terms, explains them, extracts deductible / coinsurance / specialist copay / OOP max with the source sentence, lists requirements and missing information, drafts insurer questions and can apply extracted numbers to estimates. |
-| **Access Gap Map** | Schematic map of a fictional region with status-shaped, keyboard-focusable markers, neighborhoods shaded where no matching option exists within 10 mi, filters (specialty, cost, accommodation, status, network), a summary panel and a full list/table alternative. |
-| **Appointment Plan** | Generated before/during/after checklist (verification calls, booking accommodations, referrals, prior authorization, transport, EOB review, financial assistance) with saved progress and a printable Access Card. |
-| **Overview dashboard** | Profile summary, top recommendation, match counts, *barrier cost* and *worth a phone call* insights, cost chart and plan progress. |
+| **Simple setup** | Five short screens, one question each, big tap targets: name + location (GPS or ZIP), type of care, accessibility needs (**Must have** / **Nice to have**, with plain-language or AI suggestions), how you pay (private, Medicare, Medicaid, none, not sure), how you travel and how far. Ends on the map. |
+| **Live map** | Real clinics within 5–25 miles on a dark Leaflet map. Each marker shows status (✓ / ? / ✕) and estimated total cost; the selected clinic gets a real driving route, an estimate, your needs checked against its record, "ask about" prompts, phone, hours, website. Filter by status, sort by match, cost or distance. A full keyboard-friendly list mirrors the map. |
+| **Matches** | The same clinics grouped as **Has your must-haves / Call to check / Missing a must-have**, with reasons and cautions. |
+| **Cost calculator** | A plain receipt: (1) the visit — typical price from Medicare's 2026 rate × your payer, your deductible/coinsurance or copay, explained in sentences; (2) getting there — real road miles × IRS rate or your ride fare; (3) anything else. Every number is editable. |
+| **Compare** | 2–4 clinics side by side with a written trade-off verdict and chart. |
+| **Insurance** | Payer types with real 2026 rules, and a plain-language explainer for pasted policy text (on-device, with optional DeepSeek AI). |
+| **Visit plan** | A personalized before/during/after checklist with call scripts, plus an Access Card. |
+| **Overview** | Best match (or best clinic to call first), counts, barrier cost and plan progress. |
+
+## Data sources
+
+| Data | Source | Notes |
+|---|---|---|
+| Clinics, addresses, phones, hours, wheelchair entrance/restroom | OpenStreetMap (Overpass API) | Volunteer-mapped; shown as "Mapped by OpenStreetMap volunteers". Untagged = unknown. |
+| Road distance and drive time, route lines | OSRM public routing server | Falls back to straight-line × 1.2 if unavailable. |
+| ZIP → coordinates | Zippopotam.us | |
+| GPS → city/ZIP | BigDataCloud reverse geocoding | |
+| New-patient visit price | 2026 Medicare Physician Fee Schedule: CPT 99204 $177.36 (specialists), CPT 99203 $117.57 (primary care) | National non-facility rates. |
+| Private / cash price | ×1.43 Medicare (KFF review: private insurers pay ~143% of Medicare for physician services) | Users can enter a quoted price. |
+| Medicare cost-sharing | 2026 Part B: $283 deductible, 20% coinsurance (Federal Register, Nov 19 2025) | |
+| Driving cost | IRS medical mileage rate, Jul–Dec 2026: 23.5¢/mile | Editable. |
+| Accessible ride / paratransit fares | Typical starting values, clearly editable | No public national data. |
 
 ## Economic model
 
@@ -81,12 +94,22 @@ C_total = C_medical + C_transportation + C_assistance + C_parking + C_other
 
 ## AI implementation
 
-CareCost uses language technology where it adds value, with deterministic, on-device logic as the default so the demo runs with no keys and no data leaves the browser:
+Core features are deterministic and work with no keys. AI is an optional layer for language tasks only, never for arithmetic, matching or accessibility decisions:
 
-- **Needs parser** (`src/lib/needsParser.ts`) turns a description like *"I use a power wheelchair and can't do stairs; bright lights give me headaches"* into suggested accommodations with an essential/preferred level (from strength words such as *can't* / *need*) and simple negation handling. Suggestions are always shown for confirmation.
-- **Benefits-language analyzer** (`src/lib/policy.ts`) detects 19 insurance concepts, extracts in-network/individual figures with their source sentence, identifies requirements and gaps and generates insurer questions.
-- **Explanation generators** produce match reasons, comparison verdicts, barrier-cost insights and the personalized checklist.
-- **Optional LLM summary** (`src/lib/ai.ts`): if a developer sets `VITE_ANTHROPIC_API_KEY` for local use, the Insurance Navigator shows an opt-in button that sends *only the pasted policy text* to the Claude API for a plain-language summary, after telling the user exactly what will be sent. The prompt forbids coverage predictions and medical advice. This path is off by default and was not exercised in the hosted demo. Never ship a real key in a public build.
+- **On-device language features** (always on): the needs parser (`src/lib/needsParser.ts`) turns plain-language descriptions into suggested accommodations; the benefits analyzer (`src/lib/policy.ts`) finds terms, numbers, requirements and gaps; explanation generators write match reasons, comparison verdicts and the checklist.
+- **DeepSeek (optional)** (`src/lib/ai.ts`): with a DeepSeek API key in `.env.local`, two opt-in buttons appear — **Ask AI** (needs → suggested accommodations, validated against the fixed list and always confirmed by the user) and **Explain with AI** (plain-language summary of pasted policy text; the prompt forbids coverage predictions and medical advice). The Vite dev/preview server proxies `/api/ai` to DeepSeek's Chat Completions API and adds the key server-side, so **the key never reaches the browser bundle or Git**. Only the text the user chose to send is sent.
+
+```bash
+cp .env.example .env.local   # then edit .env.local
+# DEEPSEEK_API_KEY=<your DeepSeek API key>
+# DEEPSEEK_MODEL=deepseek-chat
+```
+
+## Real location (live data)
+
+- **Use my location** (setup, profile and Map page) uses the browser's Geolocation API after the user agrees, then BigDataCloud's free client reverse-geocoder to fill in the ZIP code and area name. The location stays on the device.
+- The **Map** page lists real clinics, doctors and hospitals near the user from **OpenStreetMap** (Overpass API) on a Leaflet map, with community-mapped wheelchair access (`wheelchair=yes|limited|no`, `toilets:wheelchair`). The same hard-constraint rules apply: mapped "no" → not accessible for you; anything unmapped or "limited" → call to verify. No API keys are needed.
+- Real prices and insurance networks are not public, so the true-cost comparisons still use clearly labeled sample clinics.
 
 ## Accessibility of the app itself (WCAG 2.2 AA practices)
 
@@ -112,11 +135,10 @@ CareCost uses language technology where it adds value, with deterministic, on-de
 
 ## Data limitations
 
-- 12 fictional providers across 4 specialties in a fictional 9-neighborhood region on a schematic grid; distances are illustrative.
-- Prices, allowed amounts, networks and accessibility records are invented to exercise the logic.
-- Sample plans are simplified (one specialist-visit cost rule each).
-- The user's ZIP is collected and validated but, in demo mode, a neighborhood selector stands in for real geolocation.
-- Real plan network status cannot be checked; "My own plan" always shows network as unknown.
+- OpenStreetMap coverage and accessibility tagging vary by area; many clinics have no wheelchair tag, and exam-room access is never mapped — so most real clinics correctly land in **Call to check**.
+- OSM rarely tags medical specialty. Clinics tagged with a *different* specialty are excluded; untagged clinics are included and marked as such.
+- Prices are benchmark estimates, not clinic quotes. Insurer networks are not public, so network status is always "ask".
+- The schematic sample clinics in `src/data/providers.ts` are used only by unit tests and the landing-page story animation.
 
 ## Run locally
 
@@ -125,18 +147,18 @@ Requirements: Node.js 20+.
 ```bash
 npm install
 npm run dev            # http://localhost:5173
-npm test               # 24 unit tests for the matching, cost, insurance, policy, parser, compare and gap engines
+npm test               # 38 unit tests for the matching, cost, insurance, policy, parser, compare and gap engines
 npm run build          # production build in dist/
 npm run build:single   # one self-contained HTML file in dist-single/index.html (open it directly or host anywhere)
 ```
 
-Optional (local development only): create `.env.local` with `VITE_ANTHROPIC_API_KEY=...` to enable the opt-in AI summary.
+Optional: `cp .env.example .env.local` and add your DeepSeek API key to enable the AI buttons. Requires Node.js 20.19+ or 22.12+.
 
 ## Project structure
 
 ```
 src/
-  data/          accommodations catalog, synthetic providers & regions, sample plans, demo profile
+  data/          accommodations catalog, real 2026 benchmarks, payer types; sample clinics for tests/story only
   lib/           pure business logic (no React): matching, cost, insurance, checklist, policy, needsParser, compare, gap, ai
   state/         localStorage-backed store, tiny hash router
   components/    Layout, ProviderCard, CostViz (charts), ProfileSections (forms), ui primitives
@@ -145,7 +167,7 @@ src/
 
 ## Technical stack
 
-React 19 · TypeScript · Vite · Tailwind CSS 3 · Recharts · Lucide icons · Vitest · axe-core + Playwright for audits. No backend required.
+React 19 · TypeScript · Vite · Tailwind CSS 3 · Recharts · Leaflet + OpenStreetMap · DeepSeek AI (optional) · Lucide icons · Vitest · axe-core + Playwright for audits. No backend required.
 
 **Design:** dark black-and-green theme (Manrope headings, Public Sans body). The landing page tells the product story as a pausable, six-scene animation driven by the real matching engine (cheapest clinic ruled out → unknown clinic flagged → accessible clinic wins on true cost → plan ready). Also: a short launch splash, staggered intro and page-transition animations, count-up figures and growing cost bars. All motion is disabled by the operating system's reduced-motion setting or the in-app "Reduce motion" switch, and every color pair passes WCAG AA contrast.
 

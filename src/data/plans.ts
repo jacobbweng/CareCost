@@ -1,9 +1,66 @@
-// SYNTHETIC SAMPLE INSURANCE PLANS — fictional, for demonstration only.
+// Payment types used by the app, built on real public rules (see benchmarks.ts).
+// The "sample-*" plans further down are fixtures for unit tests and the landing
+// story only; they are hidden from the plan picker.
+import {
+  IRS_MEDICAL_MILEAGE,
+  MEDICARE_PART_B_COINSURANCE,
+  MEDICARE_PART_B_DEDUCTIBLE,
+  PRIVATE_TO_MEDICARE,
+} from './benchmarks';
 import type { CostAssumptions, InsurancePlan, Profile } from '../lib/types';
 
 export const PLANS: InsurancePlan[] = [
   {
+    id: 'private',
+    name: 'Private or job insurance',
+    short: 'Through work, the Marketplace or a family member',
+    kind: 'Private',
+    description: 'Most plans: you pay the deductible first, then a share (coinsurance) — or a flat copay.',
+    method: 'deductible_coinsurance',
+    copay: null,
+    deductibleRemaining: null,
+    coinsurancePct: 20,
+    oopRemaining: null,
+    referralRequired: false,
+    priorAuthNote: 'Ask whether specialist visits or tests need a referral or prior authorization.',
+    outOfNetworkCovered: false,
+    priceMultiplier: PRIVATE_TO_MEDICARE,
+  },
+  {
+    id: 'medicare',
+    name: 'Medicare',
+    short: 'Original Medicare Part B',
+    kind: 'Medicare',
+    description: `2026: $${MEDICARE_PART_B_DEDUCTIBLE} yearly deductible, then you pay ${MEDICARE_PART_B_COINSURANCE}% of the Medicare-approved amount.`,
+    method: 'deductible_coinsurance',
+    copay: null,
+    deductibleRemaining: MEDICARE_PART_B_DEDUCTIBLE,
+    coinsurancePct: MEDICARE_PART_B_COINSURANCE,
+    oopRemaining: null,
+    referralRequired: false,
+    priorAuthNote: 'Original Medicare doesn’t require referrals. Medicare Advantage plans often do — check your card.',
+    outOfNetworkCovered: true,
+    priceMultiplier: 1,
+  },
+  {
+    id: 'medicaid',
+    name: 'Medicaid',
+    short: 'Including state and managed-care plans',
+    kind: 'Medicaid',
+    description: 'Visits usually cost little or nothing. Enter your copay if you have one.',
+    method: 'copay',
+    copay: 4,
+    deductibleRemaining: 0,
+    coinsurancePct: 0,
+    oopRemaining: null,
+    referralRequired: true,
+    priorAuthNote: 'Many Medicaid plans need a referral from your primary doctor for specialists.',
+    outOfNetworkCovered: false,
+    priceMultiplier: 1,
+  },
+  {
     id: 'sample-ppo',
+    hidden: true,
     name: 'Sample Silver PPO',
     kind: 'PPO',
     description: 'Deductible + coinsurance plan. Specialist visits apply to the deductible.',
@@ -18,6 +75,7 @@ export const PLANS: InsurancePlan[] = [
   },
   {
     id: 'sample-hmo',
+    hidden: true,
     name: 'Sample Gold HMO',
     kind: 'HMO',
     description: 'Fixed specialist copay. Specialist visits need a referral from your primary care provider.',
@@ -32,6 +90,7 @@ export const PLANS: InsurancePlan[] = [
   },
   {
     id: 'sample-lowcost',
+    hidden: true,
     name: 'Sample Low-Cost Plan',
     kind: 'Low-cost',
     description: 'Very low fixed copays, narrower network.',
@@ -46,9 +105,10 @@ export const PLANS: InsurancePlan[] = [
   },
   {
     id: 'self-pay',
-    name: 'No insurance / self-pay',
+    name: 'No insurance',
+    short: 'Paying yourself',
     kind: 'Self-pay',
-    description: "Estimates use each provider's listed self-pay price. Ask about financial assistance and payment plans.",
+    description: 'We estimate the cash price. Always ask for the self-pay price and payment plans.',
     method: 'self_pay',
     copay: null,
     deductibleRemaining: null,
@@ -60,9 +120,10 @@ export const PLANS: InsurancePlan[] = [
   },
   {
     id: 'unknown',
-    name: "I'm not sure / prefer not to say",
+    name: 'Not sure',
+    short: 'We’ll show a range',
     kind: 'Unknown',
-    description: 'CareCost will show a cost range instead of a single estimate.',
+    description: 'We show a cost range instead of one number.',
     method: 'unknown',
     copay: null,
     deductibleRemaining: null,
@@ -74,6 +135,7 @@ export const PLANS: InsurancePlan[] = [
   },
   {
     id: 'custom',
+    hidden: true,
     name: 'My own plan (enter details)',
     kind: 'Custom',
     description: 'Enter your own copay or deductible and coinsurance. Network status for real plans cannot be checked in the demo.',
@@ -88,11 +150,13 @@ export const PLANS: InsurancePlan[] = [
   },
 ];
 
+export const PLAN_CHOICES = PLANS.filter((p) => !p.hidden);
+
 export const PLAN_BY_ID = Object.fromEntries(PLANS.map((p) => [p.id, p])) as Record<string, InsurancePlan>;
 
 /** Transparent, editable cost assumptions. Demo values — not quotes. */
 export const DEFAULT_ASSUMPTIONS: CostAssumptions = {
-  vehiclePerMile: 0.7,
+  vehiclePerMile: IRS_MEDICAL_MILEAGE,
   rideshareBase: 7,
   ridesharePerMile: 2.5,
   paratransitFare: 4,
@@ -144,6 +208,25 @@ export const DEMO_PROFILE: Profile = {
     'What are the next steps after today, and what will each one cost?',
     'Can follow-up visits be done by telehealth?',
   ],
+  notes: '',
+};
+
+/** Starting profile for real users. */
+export const NEW_PROFILE: Profile = {
+  name: '',
+  zip: '',
+  location: null,
+  homeAreaId: 'riverside',
+  specialty: 'primary_care',
+  planId: 'unknown',
+  insurance: { method: 'deductible_coinsurance', copay: null, deductibleRemaining: null, coinsurancePct: null, oopRemaining: null },
+  needs: {},
+  budget: null,
+  maxDistance: 10,
+  transport: 'own_vehicle',
+  extras: { assistance: 0, other: 0 },
+  communication: [],
+  questions: [],
   notes: '',
 };
 

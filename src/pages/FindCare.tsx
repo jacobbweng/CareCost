@@ -93,7 +93,7 @@ export function FindCare() {
             <legend className="field-label">Show only</legend>
             <label className={cx('flex min-h-[36px] items-center gap-2.5 text-[0.95rem]', !hasNetwork && 'opacity-60')}>
               <input type="checkbox" className="h-5 w-5 accent-pine-700" checked={inNetworkOnly} disabled={!hasNetwork} onChange={(e) => setInNetworkOnly(e.target.checked)} />
-              In network{!hasNetwork && ' (needs a sample plan)'}
+              In network{!hasNetwork && ' (pick a plan first)'}
             </label>
             <label className="flex min-h-[36px] items-center gap-2.5 text-[0.95rem]">
               <input type="checkbox" className="h-5 w-5 accent-pine-700" checked={withinDistance} onChange={(e) => setWithinDistance(e.target.checked)} />

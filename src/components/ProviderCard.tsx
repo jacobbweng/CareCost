@@ -1,4 +1,4 @@
-import { ArrowRight, Bus, Check, ChevronRight, Clock, MapPin, Plus, Sparkles, TriangleAlert } from 'lucide-react';
+import { ArrowRight, Bus, Check, ChevronRight, Clock, MapPin, Phone, Plus, Sparkles, TriangleAlert } from 'lucide-react';
 import { ACC_BY_ID } from '../data/accommodations';
 import { PLAN_BY_ID } from '../data/plans';
 import { AREA_BY_ID } from '../data/providers';
@@ -58,26 +58,28 @@ export function ProviderCard({ r, featured, maxTotal }: { r: MatchResult; featur
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={r.status} />
-            {plan && plan.method !== 'self_pay' && plan.method !== 'unknown' && <NetworkBadge network={r.network} planName={plan.name} />}
+            {plan && plan.method !== 'self_pay' && plan.method !== 'unknown' && r.network !== 'unknown' && <NetworkBadge network={r.network} planName={plan.name} />}
             {r.rank && !featured && <span className="chip bg-paper-100 text-ink-700 ring-1 ring-line">Rank #{r.rank}</span>}
           </div>
           <h3 id={headingId} className="mt-3 text-[1.3rem] font-bold leading-snug">
             <a href={href(`/provider/${p.id}`)} className="hover:text-pine-700 hover:underline">{p.name}</a>
           </h3>
           <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.92rem] text-ink-600">
-            <span className="inline-flex items-center gap-1"><MapPin aria-hidden className="h-4 w-4" />{AREA_BY_ID[p.areaId]?.name} · {r.cost.distanceMiles} mi</span>
-            <span className="inline-flex items-center gap-1"><Clock aria-hidden className="h-4 w-4" />New patients ~{p.newPatientWaitDays} days</span>
+            <span className="inline-flex items-center gap-1"><MapPin aria-hidden className="h-4 w-4" />{p.kind ?? (p.areaId ? AREA_BY_ID[p.areaId]?.name : '')} · {r.cost.distanceMiles} mi</span>
+            {p.driveMinutes !== undefined && <span className="inline-flex items-center gap-1"><Clock aria-hidden className="h-4 w-4" />{p.driveMinutes} min drive</span>}
+            {p.newPatientWaitDays !== undefined && <span className="inline-flex items-center gap-1"><Clock aria-hidden className="h-4 w-4" />New patients ~{p.newPatientWaitDays} days</span>}
             {p.nearAccessibleTransit && <span className="inline-flex items-center gap-1"><Bus aria-hidden className="h-4 w-4" />Accessible transit nearby</span>}
+            {p.phone && <span className="inline-flex items-center gap-1"><Phone aria-hidden className="h-4 w-4" /><span className="select-all">{p.phone}</span></span>}
           </p>
         </div>
 
         <div className="shrink-0 md:w-[260px] md:text-right">
-          <p className="text-sm font-semibold text-ink-600">Estimated true cost of access</p>
+          <p className="text-sm font-semibold text-ink-600">Estimated total cost</p>
           <p className="num text-[2rem] font-extrabold leading-tight tracking-tight">
             {usd(r.cost.total)}
           </p>
           <p className="text-sm text-ink-600">
-            Medical share <span className="num font-semibold text-ink">{usd(r.cost.medical)}</span>
+            Visit <span className="num font-semibold text-ink">{usd(r.cost.medical)}</span>
             {r.cost.totalHigh > r.cost.total + 0.5 && <> · up to <span className="num">{usd(r.cost.totalHigh)}</span></>}
           </p>
         </div>

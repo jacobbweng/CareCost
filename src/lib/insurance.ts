@@ -157,7 +157,7 @@ export function estimateMedical(provider: Provider, profile: Profile, plan: Insu
       amount: provider.selfPayPrice,
       low: provider.selfPayPrice,
       high: provider.selfPayPrice,
-      basis: 'Listed self-pay price (synthetic)',
+      basis: provider.priceSource ? `Estimated cash price (${provider.priceSource})` : 'Listed self-pay price',
       notes: ['Ask whether the clinic offers a prompt-pay discount, sliding-scale fees or a payment plan.'],
       network: 'out',
     };
@@ -175,7 +175,9 @@ export function estimateMedical(provider: Provider, profile: Profile, plan: Insu
   }
 
   const network = networkStatus(provider, plan.id);
-  const inNet = estimateInsurance({ ...profile.insurance, allowedAmount: provider.allowedAmount });
+  // Payer-specific allowed amount: benchmark (Medicare) price × this payer's typical multiplier
+  const allowed = Math.round(provider.allowedAmount * (plan.priceMultiplier ?? 1) * 100) / 100;
+  const inNet = estimateInsurance({ ...profile.insurance, allowedAmount: allowed });
 
   if (network === 'in') {
     return {
@@ -199,15 +201,17 @@ export function estimateMedical(provider: Provider, profile: Profile, plan: Insu
   }
 
   notes.push(
-    plan.id === 'custom'
-      ? 'CareCost cannot check real network status. The estimate assumes in-network; the high end assumes out-of-network self-pay.'
-      : 'Network status is unknown. The estimate assumes in-network; the high end assumes out-of-network self-pay.',
+    plan.kind === 'Medicare'
+      ? 'Assumes the clinic accepts Medicare. Ask when you call; the high end is the cash price.'
+      : plan.kind === 'Medicaid'
+        ? 'Assumes the clinic accepts your Medicaid plan. Ask when you call; the high end is the cash price.'
+        : 'Assumes the clinic is in your plan’s network. Ask when you call; the high end is the cash price.',
   );
   return {
     amount: inNet.estimate,
     low: inNet.low,
     high: Math.max(inNet.high, provider.selfPayPrice),
-    basis: 'Network unknown — in-network estimate shown',
+    basis: provider.priceSource ? `${inNet.method === 'copay' ? 'Copay' : 'Deductible + coinsurance'} estimate from ${provider.priceSource}` : 'Network unknown — in-network estimate shown',
     notes: [...notes, ...inNet.warnings],
     network,
     inNetwork: inNet,

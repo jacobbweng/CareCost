@@ -64,7 +64,7 @@ export function StoryDemo() {
     return `M ${home.x} ${home.y} Q ${mx} ${my} ${to.x} ${to.y}`;
   };
 
-  const P = (r: typeof north) => ({ x: r.provider.x, y: r.provider.y });
+  const P = (r: typeof north) => ({ x: r.provider.x!, y: r.provider.y! });
 
   return (
     <section
@@ -130,7 +130,7 @@ export function StoryDemo() {
 
           {/* Every neurology clinic, faint */}
           {s.results.map((r) => (
-            <circle key={r.provider.id} cx={r.provider.x} cy={r.provider.y} r="0.32" fill="#2a3832" />
+            <circle key={r.provider.id} cx={r.provider.x!} cy={r.provider.y!} r="0.32" fill="#2a3832" />
           ))}
 
           {/* Routes */}
@@ -142,7 +142,7 @@ export function StoryDemo() {
           )}
           {scene >= 4 && (
             <>
-              <circle cx={east.provider.x} cy={east.provider.y} r="3.2" fill="url(#story-glow)" className="animate-fade" />
+              <circle cx={east.provider.x!} cy={east.provider.y!} r="3.2" fill="url(#story-glow)" className="animate-fade" />
               <path key={`re-${cycle}`} d={route(P(east), 1.8)} pathLength={1} fill="none" stroke="#22c55e" strokeWidth="0.22" className="route-draw" strokeLinecap="round" />
             </>
           )}
@@ -159,7 +159,7 @@ export function StoryDemo() {
         </Pin>
 
         {scene >= 1 && (
-          <Pin x={north.provider.x} y={north.provider.y} above>
+          <Pin x={north.provider.x!} y={north.provider.y!} above>
             <span
               key={`n-${scene >= 2}-${cycle}`}
               className={cx(
@@ -175,7 +175,7 @@ export function StoryDemo() {
         )}
 
         {scene >= 3 && (
-          <Pin x={mid.provider.x} y={mid.provider.y} below>
+          <Pin x={mid.provider.x!} y={mid.provider.y!} below>
             <span key={`m-${cycle}`} className="animate-pop flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#5c4512] bg-amberx-100 px-2 py-1 text-[0.7rem] font-bold text-amberx-800 shadow-lift md:text-xs">
               <CircleQuestionMark aria-hidden className="h-3.5 w-3.5" /> exam room unknown
             </span>
@@ -183,7 +183,7 @@ export function StoryDemo() {
         )}
 
         {scene >= 4 && (
-          <Pin x={east.provider.x} y={east.provider.y} above>
+          <Pin x={east.provider.x!} y={east.provider.y!} above>
             <span key={`e-${cycle}`} className="animate-pop flex items-center gap-1 whitespace-nowrap rounded-lg bg-accent px-2 py-1 text-[0.7rem] font-extrabold text-accent-ink shadow-glow md:text-xs">
               <Check aria-hidden className="h-3.5 w-3.5" /> fits · {usd(east.cost.total)}
             </span>
@@ -207,7 +207,7 @@ export function StoryDemo() {
         {/* Plan card */}
         {scene === 5 && (
           <div key={`plan-${cycle}`} className="animate-slide-left absolute bottom-3 right-3 w-[min(260px,64%)] rounded-2xl border border-pine-300 bg-shell/90 p-3 text-xs shadow-glow backdrop-blur md:p-4 md:text-sm">
-            <p className="font-display text-sm font-extrabold text-white md:text-base">{east.provider.name.replace(' Clinic', '')}</p>
+            <p className="font-display text-sm font-extrabold text-white md:text-base">Your visit plan</p>
             <ul className="mt-2 space-y-1.5">
               {['Reserve the accessible room', 'Confirm in-network', 'Book the accessible ride', 'Bring your Access Card'].map((t, i) => (
                 <li key={t} className={cx('animate-rise flex items-center gap-2 text-ink-700', `intro-${i + 2}`)}>
@@ -221,7 +221,6 @@ export function StoryDemo() {
           </div>
         )}
 
-        <p className="absolute left-3 top-3 rounded-full bg-black/50 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-ink-600">Synthetic demo</p>
       </div>
     </section>
   );

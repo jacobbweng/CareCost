@@ -107,9 +107,9 @@ export function generateChecklist(profile: Profile, match: MatchResult): Checkli
       title: match.network === 'in' ? 'Confirm in-network status with your insurer' : 'Find out whether this provider is in network',
       detail:
         match.network === 'in'
-          ? `CareCost's sample data lists ${p.name} as in network with ${plan.name}. Networks change — confirm with both the clinic and your insurer.`
+          ? `${p.name} is listed as in network with ${plan.name}. Networks change — confirm with the clinic and your insurer.`
           : `Network status is ${match.network === 'out' ? 'listed as out of network' : 'unknown'}. Ask both the clinic and your insurer before booking.`,
-      script: `Is ${p.clinician.replace(' (fictional)', '')} at ${p.name} in network for my plan, for a ${spec.service.toLowerCase()}?`,
+      script: `Does ${p.name} take my plan for a ${spec.service.toLowerCase()}?`,
     });
     if (plan.referralRequired) {
       tasks.push({ id: 'ins-referral', phase: 'before', priority: 'high', tag: 'insurance', title: 'Get a referral from your primary care provider', detail: `${plan.name} requires a referral for specialist visits. Without it, the visit may not be covered.` });

@@ -17,14 +17,14 @@ import { useStore } from '../state/store';
 import { ConfirmDialog, Segmented, cx } from './ui';
 
 export const NAV = [
+  { to: '/map', label: 'Map', icon: MapIcon },
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { to: '/find', label: 'Find Care', icon: Search },
-  { to: '/map', label: 'Access Gap Map', icon: MapIcon },
-  { to: '/compare', label: 'Provider Comparison', icon: Scale },
-  { to: '/cost', label: 'Cost Calculator', icon: Calculator },
-  { to: '/insurance', label: 'Insurance Navigator', icon: FileText },
-  { to: '/plan', label: 'Appointment Plan', icon: ClipboardList },
-  { to: '/profile', label: 'My Accessibility Profile', icon: User },
+  { to: '/find', label: 'Matches', icon: Search },
+  { to: '/compare', label: 'Compare', icon: Scale },
+  { to: '/cost', label: 'Costs', icon: Calculator },
+  { to: '/insurance', label: 'Insurance', icon: FileText },
+  { to: '/plan', label: 'Visit plan', icon: ClipboardList },
+  { to: '/profile', label: 'My profile', icon: User },
 ] as const;
 
 export function Logo({ onDark }: { onDark?: boolean }) {
@@ -102,7 +102,7 @@ export function AppLayout({ current, children }: { current: string; children: Re
 
   const resetBtn = (
     <button type="button" onClick={() => setConfirm(true)} className="btn w-full justify-start border border-white/20 px-3 text-sm text-white hover:bg-white/10">
-      <RotateCcw aria-hidden className="h-4 w-4" /> Reset demo
+      <RotateCcw aria-hidden className="h-4 w-4" /> Start over
     </button>
   );
 
@@ -151,30 +151,26 @@ export function AppLayout({ current, children }: { current: string; children: Re
       )}
 
       <div className="min-w-0">
-        <div className="border-b border-line bg-shell/80 px-4 py-2 text-center text-[0.85rem] font-medium text-ink-600 backdrop-blur no-print md:px-8" role="note">
-          <span className="mr-2 inline-flex items-center gap-1.5 rounded-full border border-[#5c4512] bg-amberx-50 px-2 py-0.5 text-[0.75rem] font-bold uppercase tracking-wider text-amberx-800">Demo</span>
-          Every provider, price, plan and accessibility record is <strong className="text-ink">synthetic</strong>. CareCost estimates costs; it is not a medical provider, insurer or financial guarantee.
-        </div>
+
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1180px] px-4 pb-20 pt-8 focus:outline-none md:px-8 md:pt-10">
           <div key={current} className="stagger">{children}</div>
         </main>
         <footer className="mx-auto max-w-[1180px] border-t border-line px-4 py-6 text-sm text-ink-600 md:px-8 no-print">
-          CareCost is a healthcare navigation and cost-estimation tool. It does not provide medical advice, diagnoses or treatment
-          recommendations, and its estimates are not insurer determinations. Your profile is stored only in this browser.
+          Estimates only — not medical, insurance or financial advice. Your profile stays on this device.
         </footer>
       </div>
 
       <ConfirmDialog
         open={confirm}
-        title="Reset the demonstration?"
-        confirmLabel="Reset demo"
+        title="Start over?"
+        confirmLabel="Start over"
         onClose={() => setConfirm(false)}
         onConfirm={() => {
           resetDemo();
           navigate('/');
         }}
       >
-        This restores the sample patient profile, clears your checklist progress and comparison, and returns to the home page.
+        This clears your profile, location and checklist on this device.
       </ConfirmDialog>
     </div>
   );

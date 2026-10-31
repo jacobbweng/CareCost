@@ -109,8 +109,8 @@ export function Compare() {
                   const items = [...r.unverified, ...r.preferred.filter((c) => c.status === 'unknown')];
                   return items.length ? <span className="text-sm text-amberx-800">{items.map((c) => ACC_BY_ID[c.id].short).join(', ')}</span> : <span className="text-sm text-ink-600">Nothing outstanding</span>;
                 })}
-                {row('New-patient wait', (r) => <span>~{r.provider.newPatientWaitDays} days</span>)}
-                {row('Telehealth follow-ups', (r) => <span>{r.provider.telehealthFollowUps ? 'Yes' : 'No'}</span>)}
+                {row('Drive time', (r) => <span>{r.provider.driveMinutes !== undefined ? `${r.provider.driveMinutes} min` : '—'}</span>)}
+                {row('Phone', (r) => <span className="select-all">{r.provider.phone ?? 'Not listed'}</span>)}
               </tbody>
             </table>
           </div>

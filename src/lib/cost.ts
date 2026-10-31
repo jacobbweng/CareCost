@@ -6,11 +6,22 @@
 // distance to the provider and the user's chosen mode.
 import { AREA_BY_ID } from '../data/providers';
 import { estimateMedical, round2 } from './insurance';
+import { milesBetween } from './geo';
 import type { CostAssumptions, CostBreakdown, InsurancePlan, Profile, Provider, TransportMode } from './types';
 
-export function distanceMiles(profile: Pick<Profile, 'homeAreaId'>, provider: Provider, a: CostAssumptions): number {
+/**
+ * One-way distance to the provider, in miles:
+ * 1. real road distance (OSRM) when available,
+ * 2. otherwise straight-line distance × road factor from the user's real location,
+ * 3. otherwise the schematic grid (test fixtures / landing story).
+ */
+export function distanceMiles(profile: Pick<Profile, 'homeAreaId' | 'location'>, provider: Provider, a: CostAssumptions): number {
+  if (provider.roadMiles !== undefined) return Math.round(provider.roadMiles * 10) / 10;
+  if (provider.lat !== undefined && provider.lng !== undefined && profile.location) {
+    return Math.round(milesBetween(profile.location, { lat: provider.lat, lng: provider.lng }) * a.roadFactor * 10) / 10;
+  }
   const home = AREA_BY_ID[profile.homeAreaId] ?? AREA_BY_ID.riverside;
-  const straight = Math.hypot(provider.x - home.x, provider.y - home.y);
+  const straight = Math.hypot((provider.x ?? home.x) - home.x, (provider.y ?? home.y) - home.y);
   return Math.round(straight * a.roadFactor * 10) / 10;
 }
 
@@ -24,14 +35,14 @@ export function transportCost(
   switch (mode) {
     case 'own_vehicle':
     case 'driven_by_someone':
-      notes.push(`Round trip ${round2(miles * 2)} mi × $${a.vehiclePerMile.toFixed(2)}/mi vehicle cost.`);
-      if (provider.parkingCost > 0) notes.push(`Listed parking: $${provider.parkingCost} per visit (synthetic).`);
+      notes.push(`Round trip ${round2(miles * 2)} mi × $${a.vehiclePerMile.toFixed(3).replace(/0$/, '')}/mi.`);
+      if (provider.parkingCost > 0) notes.push(`Parking: $${provider.parkingCost} per visit.`);
       return { transportation: round2(miles * 2 * a.vehiclePerMile), parking: provider.parkingCost, notes };
     case 'accessible_rideshare':
-      notes.push(`2 one-way trips × ($${a.rideshareBase} base + ${miles} mi × $${a.ridesharePerMile}/mi) — demo fare assumption.`);
+      notes.push(`2 trips × ($${a.rideshareBase} base + ${miles} mi × $${a.ridesharePerMile}/mi). Typical accessible-ride fare — edit to match your area.`);
       return { transportation: round2(2 * (a.rideshareBase + a.ridesharePerMile * miles)), parking: 0, notes };
     case 'paratransit':
-      notes.push(`2 one-way trips × $${a.paratransitFare} paratransit fare — demo assumption; service areas and booking rules vary.`);
+      notes.push(`2 trips × $${a.paratransitFare} paratransit fare. Edit to match your local service.`);
       return { transportation: round2(2 * a.paratransitFare), parking: 0, notes };
     case 'public_transit':
       notes.push(`2 one-way trips × $${a.transitFare} transit fare.`);
@@ -90,7 +101,7 @@ export const COST_KEYS = ['medical', 'transportation', 'parking', 'assistance', 
 export type CostKey = (typeof COST_KEYS)[number];
 
 export const COST_LABELS: Record<CostKey, string> = {
-  medical: 'Medical (your share)',
+  medical: 'Visit (your share)',
   transportation: 'Transportation',
   parking: 'Parking',
   assistance: 'Paid assistance',

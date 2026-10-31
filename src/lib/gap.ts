@@ -15,7 +15,7 @@ export interface AreaCoverage {
 export function areaCoverage(results: MatchResult[], a: CostAssumptions, radius = COVERAGE_RADIUS_MI): AreaCoverage[] {
   return AREAS.map((area) => {
     const withDist = results
-      .map((r) => ({ result: r, miles: Math.round(Math.hypot(r.provider.x - area.x, r.provider.y - area.y) * a.roadFactor * 10) / 10 }))
+      .map((r) => ({ result: r, miles: Math.round(Math.hypot(r.provider.x! - area.x, r.provider.y! - area.y) * a.roadFactor * 10) / 10 }))
       .sort((x, y) => x.miles - y.miles);
     const nearestMeets = withDist.find((d) => d.result.status === 'meets') ?? null;
     return { area, nearestMeets, nearestAny: withDist[0] ?? null, covered: !!nearestMeets && nearestMeets.miles <= radius };

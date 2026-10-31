@@ -12,20 +12,11 @@ export function prefersReducedMotion() {
 
 /**
  * Launch splash: the logo draws itself, the wordmark rises, then the overlay
- * fades away (≈1.5s). Shown once per browser session, never blocks input,
+ * fades away (≈1.5s). Plays on every page load, never blocks input,
  * hidden from screen readers and skipped entirely with reduced motion.
  */
 export function Splash() {
-  const [show, setShow] = useState(() => {
-    if (prefersReducedMotion()) return false;
-    try {
-      if (sessionStorage.getItem('carecost.splash')) return false;
-      sessionStorage.setItem('carecost.splash', '1');
-    } catch {
-      /* storage unavailable — still show once per load */
-    }
-    return true;
-  });
+  const [show, setShow] = useState(() => !prefersReducedMotion());
   useEffect(() => {
     if (!show) return;
     const t = setTimeout(() => setShow(false), 1600);

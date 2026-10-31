@@ -2,6 +2,7 @@ import { CircleCheck, ShieldCheck } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import {
   BudgetTravelSection,
+  CareSection,
   CommunicationSection,
   InsuranceSection,
   LocationSection,
@@ -28,11 +29,11 @@ function Block({ id, title, desc, children }: { id: string; title: string; desc?
 }
 
 export function ProfilePage() {
-  const { profile, setProfile, summary } = useStore();
+  const { profile, setProfile } = useStore();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const patch = (p: Partial<Profile>) => {
     const next = { ...profile, ...p };
-    if (p.zip !== undefined) setErrors(validateLocation(next));
+    if (p.location !== undefined) setErrors(validateLocation(next));
     setProfile((x) => ({ ...x, ...p }));
   };
 
@@ -40,41 +41,40 @@ export function ProfilePage() {
     <>
       <PageHeader
         eyebrow="My accessibility profile"
-        title="Your needs, your terms"
+        title="My profile"
         actions={<a href={href('/start')} className="btn-secondary">Run guided setup again</a>}
       >
-        Changes save automatically on this device and immediately update your matches.
+        Changes save automatically.
         <p className="mt-2 flex items-center gap-1.5 text-[0.95rem] font-semibold text-pine-800" role="status">
-          <CircleCheck aria-hidden className="h-4 w-4" /> Saved · {summary.meets.length} provider{summary.meets.length === 1 ? '' : 's'} currently meet your essential requirements
+          <CircleCheck aria-hidden className="h-4 w-4" /> Saved
         </p>
       </PageHeader>
 
       <div className="panel p-6 md:p-8">
-        <Block id="p-loc" title="Location & care" desc="ZIP code and the type of clinician you need.">
+        <Block id="p-loc" title="You">
           <LocationSection value={profile} onChange={patch} errors={errors} />
         </Block>
-        <Block id="p-needs" title="Accessibility needs" desc="Essential needs are hard requirements. Preferred needs improve ranking.">
+        <Block id="p-care" title="Care">
+          <CareSection value={profile} onChange={patch} />
+        </Block>
+        <Block id="p-needs" title="At the clinic">
           <NeedsSection value={profile} onChange={patch} />
         </Block>
-        <Block id="p-ins" title="Insurance" desc="Used for medical cost estimates.">
+        <Block id="p-ins" title="Paying">
           <InsuranceSection value={profile} onChange={patch} />
         </Block>
-        <Block id="p-budget" title="Budget & travel">
+        <Block id="p-budget" title="Travel">
           <BudgetTravelSection value={profile} onChange={patch} />
         </Block>
-        <Block id="p-comm" title="Communication & questions" desc="Shown on your Access Card.">
+        <Block id="p-comm" title="Access Card" desc="Shown on your visit plan.">
           <CommunicationSection value={profile} onChange={patch} />
-          <div className="mt-6">
-            <label htmlFor="p-name" className="field-label">Name on Access Card (optional)</label>
-            <input id="p-name" className="input max-w-sm" value={profile.name} autoComplete="given-name" onChange={(e) => patch({ name: e.target.value })} />
-          </div>
         </Block>
       </div>
 
       <section className="mt-6 flex gap-3 rounded-xl2 border border-line bg-surface p-5" aria-label="Privacy">
         <ShieldCheck aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-pine-700" />
         <p className="text-[0.95rem] text-ink-700">
-          <strong className="text-ink">Privacy:</strong> CareCost never asks for a diagnosis, date of birth, member ID or street address. Your profile is stored only in this browser&rsquo;s local storage and is never uploaded. Use “Reset demo” in the menu to erase it.
+          <strong className="text-ink">Privacy:</strong> CareCost never asks for a diagnosis, date of birth, member ID or street address. Your profile stays in this browser. Use “Start over” in the menu to erase it.
         </p>
       </section>
     </>

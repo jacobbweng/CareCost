@@ -1,10 +1,10 @@
-import { ArrowLeft, ArrowRight, Bus, Calculator, Check, Clock, MapPin, Phone, Plus, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bus, Calculator, Check, Clock, ExternalLink, MapPin, Phone, Plus, Video } from 'lucide-react';
 import { CostBar } from '../components/CostViz';
 import { CATEGORY_ICON } from '../components/ProfileSections';
-import { ACC_STATUS_TEXT, AccStatusIcon, Callout, Money, NetworkBadge, PageHeader, SourceTag, StatusBadge, SyntheticNote, Term, cx } from '../components/ui';
+import { ACC_STATUS_TEXT, AccStatusIcon, Callout, Money, NetworkBadge, PageHeader, SourceTag, StatusBadge, Term, cx } from '../components/ui';
 import { ACCOMMODATIONS, ACC_BY_ID, CATEGORY_META } from '../data/accommodations';
 import { PLAN_BY_ID } from '../data/plans';
-import { AREA_BY_ID, SPECIALTY_BY_ID } from '../data/providers';
+import { SPECIALTY_BY_ID } from '../data/providers';
 import { COST_KEYS, COST_LABELS } from '../lib/cost';
 import { estimateMedical } from '../lib/insurance';
 import { fmtDate, usd, usd2 } from '../lib/format';
@@ -55,7 +55,6 @@ export function ProviderDetail({ id }: { id: string }) {
           {plan.method !== 'self_pay' && plan.method !== 'unknown' && <NetworkBadge network={r.network} planName={plan.name} />}
         </div>
         <p className="mt-3">{p.blurb}</p>
-        <SyntheticNote className="mt-2" />
       </PageHeader>
 
       {r.status === 'does_not_meet' && (
@@ -133,7 +132,7 @@ export function ProviderDetail({ id }: { id: string }) {
             <p className="mt-3 text-sm font-semibold">{med.basis}</p>
             <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-ink-700">
               {r.cost.notes.map((n) => <li key={n}>{n}</li>)}
-              <li>Listed <Term term="allowed amount">allowed amount</Term>: {usd(p.allowedAmount)} · <Term term="self-pay price">self-pay price</Term>: {usd(p.selfPayPrice)} (synthetic).</li>
+              {p.priceSource && <li>Price basis: {p.priceSource}. Medicare rate {usd(p.allowedAmount)} · estimated cash price {usd(p.selfPayPrice)}.</li>}
             </ul>
             <a href={href(`/cost?provider=${p.id}`)} className="btn-secondary mt-4"><Calculator aria-hidden className="h-4 w-4" /> Adjust in Cost Calculator</a>
           </section>
@@ -141,14 +140,15 @@ export function ProviderDetail({ id }: { id: string }) {
           <section className="panel p-6" aria-labelledby="info-h">
             <h2 id="info-h" className="text-xl font-bold">Practical details</h2>
             <ul className="mt-3 space-y-2.5 text-[0.95rem]">
-              <li className="flex gap-2.5"><MapPin aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.address} · {r.cost.distanceMiles} mi from {AREA_BY_ID[profile.homeAreaId]?.name}</li>
-              <li className="flex gap-2.5"><Phone aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.phone} (fictional number)</li>
-              <li className="flex gap-2.5"><Clock aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />New-patient wait about {p.newPatientWaitDays} days</li>
-              <li className="flex gap-2.5"><Bus aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.nearAccessibleTransit ? 'Accessible transit stop nearby' : 'No accessible transit stop listed nearby'}</li>
-              <li className="flex gap-2.5"><Video aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.telehealthFollowUps ? 'Telehealth follow-ups offered' : 'No telehealth follow-ups listed'}</li>
-              <li className="flex gap-2.5"><span aria-hidden className="w-4" />Parking for drivers: {p.parkingCost ? usd(p.parkingCost) : 'free'}</li>
+              <li className="flex gap-2.5"><MapPin aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.address || 'Address not listed'} · {r.cost.distanceMiles} mi{p.driveMinutes ? ` · ${p.driveMinutes} min drive` : ''}</li>
+              {p.phone && <li className="flex gap-2.5"><Phone aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" /><span className="select-all font-semibold">{p.phone}</span></li>}
+              {p.hours && <li className="flex gap-2.5"><Clock aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.hours}</li>}
+              {p.newPatientWaitDays !== undefined && <li className="flex gap-2.5"><Clock aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />New-patient wait about {p.newPatientWaitDays} days</li>}
+              {p.nearAccessibleTransit !== undefined && <li className="flex gap-2.5"><Bus aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.nearAccessibleTransit ? 'Accessible transit stop nearby' : 'No accessible transit stop listed nearby'}</li>}
+              {p.telehealthFollowUps !== undefined && <li className="flex gap-2.5"><Video aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" />{p.telehealthFollowUps ? 'Telehealth follow-ups offered' : 'No telehealth follow-ups listed'}</li>}
+              {p.website && <li className="flex gap-2.5"><ExternalLink aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" /><a className="font-semibold text-pine-800 hover:underline" href={p.website} target="_blank" rel="noreferrer">Website<span className="sr-only"> (opens in new tab)</span></a></li>}
+              {p.osmUrl && <li className="flex gap-2.5"><ExternalLink aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-pine-700" /><a className="font-semibold text-pine-800 hover:underline" href={p.osmUrl} target="_blank" rel="noreferrer">View on OpenStreetMap<span className="sr-only"> (opens in new tab)</span></a></li>}
             </ul>
-            <p className="mt-4 text-sm text-ink-600">Clinician: {p.clinician}</p>
           </section>
 
           {r.status !== 'does_not_meet' && (

@@ -9,11 +9,13 @@ For a wheelchair user, the cheapest neurologist in town isn't cheap if the exam 
 ## What it does
 CareCost turns accessibility needs and healthcare economics into one decision:
 
+- **Real data.** Live OpenStreetMap clinics with wheelchair tags, OSRM road distances, 2026 Medicare prices and IRS mileage rates.
 - **Accessibility profile, no diagnosis required.** Choose from 20 specific accommodations (step-free entrance, accessible exam room, ASL interpreter, quiet waiting area…) and mark each *Essential* or *Preferred* — or describe your needs in your own words and confirm the suggestions.
 - **Accessibility-constrained matching.** Essential needs are hard constraints. Providers are labeled *Meets*, *Needs verification* or *Does not meet* — unknown is never treated as yes or no — and every record shows whether it was verified on site, reported by the provider, or missing.
 - **True Cost of Access.** Medical share + transportation + parking + any assistance or other costs the user chooses to add. Insurance math (copay or deductible + coinsurance, capped at the out-of-pocket max) is shown step by step.
 - **Barrier cost.** CareCost quantifies how much extra a patient pays to travel past the nearest inaccessible clinic — a cost of the system, not the person.
 - **Insurance Navigator.** Network status per provider, and a benefits-text explainer that highlights jargon, extracts numbers with their source sentence, flags missing information and drafts questions for the insurer.
+- **Real location + live map.** "Use my location" finds real clinics nearby from OpenStreetMap with community-mapped wheelchair access, judged by the same hard-constraint rules.
 - **Access Gap Map.** Where accessible, affordable care clusters — and which neighborhoods have none within 10 miles — with a full keyboard list alternative.
 - **Appointment Plan.** A personalized before/during/after checklist with call scripts, plus a printable Access Card.
 
@@ -23,7 +25,7 @@ React 19 + TypeScript + Vite, Tailwind CSS, Recharts and Lucide. All business lo
 ## Technical highlights
 - **Constraint-first optimization:** classification on essential requirements happens *before* scoring; scoring (cost 45%, insurance 20%, distance 15%, preferences 15%, confidence 5%) only ranks the eligible set, and every rank comes with generated reasons and cautions.
 - **Honest uncertainty:** missing insurance inputs widen a low–high range instead of becoming zero; out-of-network and unknown-network cases use conservative bounds; stale (>1 year) accessibility records are flagged.
-- **On-device language features:** the needs parser and benefits analyzer are deterministic and private. An optional, opt-in Claude API summary is available for local development and sends only the pasted text.
+- **On-device language features:** the needs parser and benefits analyzer are deterministic and private. Optional, opt-in DeepSeek features (AI needs suggestions and plain-language policy summaries) run through a local server-side proxy, so the API key never reaches the browser; only the text the user chooses is sent.
 - **Accessible by construction:** focus management on route change, live-region announcements, icon + text + shape for every status, chart text alternatives and data tables, text-size and reduce-motion controls — 0 axe WCAG A/AA violations.
 
 ## Challenges
@@ -45,14 +47,14 @@ react · typescript · vite · tailwindcss · recharts · lucide · vitest · pl
 
 ## Suggested 2–3 minute judging demo
 
-**0:00 — The problem (15s).** Home page. "For disabled patients, the cheapest bill isn't always care they can use — or the cheapest way to get care." Point to the sample card: Northgate is cheapest but its exam room is confirmed inaccessible.
+**0:00 — The story (25s).** Reload the home page: the logo animates in, then the full-screen intro. Scroll to the mission, then let the six-scene story play: cheapest clinic ruled out, unknown clinic flagged, accessible clinic wins on true cost.
 
-**0:15 — Profile (35s).** Click **Find Accessible Care**. Show ZIP validation (type `12`, Continue → error, focus moves to the field), then `30301`. Step 2: click **Use an example → Suggest accommodations** to show plain-language parsing (no need to add them — the sample profile is already set); note step-free entrance and accessible exam room are *Essential*. Click through insurance (Sample Silver PPO) and budget/travel (wheelchair-accessible rideshare) → **See my matches**.
+**0:25 — Setup (45s).** Click **Go to app**. Type a name, press **Use my location** (or enter a ZIP). Pick a type of care. Mark *step-free entrance* and *accessible exam room* as **Must have**. Open "describe it in your own words" and press **Ask AI** to show DeepSeek suggestions. Choose **Medicare**, then **I drive** → **Show my map**.
 
-**0:50 — Matching (35s).** Find Care: three groups. Eastbrook is recommended — verified on site. Midtown *needs verification* (exam room unreported) — not guessed. Expand **Show excluded providers**: Northgate and Westmere are cheaper but confirmed not to meet an essential need, so they're never recommended.
+**1:10 — Live map (40s).** Real clinics nearby with ✓ / ? / ✕ markers and estimated totals. Click a clinic: the real driving route draws, the panel shows its wheelchair data from OpenStreetMap, what's still unknown ("ask about: accessible exam room"), phone and hours. Point out that unknown stays unknown and clinics missing a must-have are never recommended.
 
-**1:25 — True cost (35s).** **Provider Comparison**: Lakeshore has a lower medical estimate than Eastbrook but costs more once a 17-mile accessible ride is included — the verdict says so in words, the chart shows it. Open **Cost Calculator**: formula with live numbers, both insurance models side by side with step-by-step math. Switch travel mode to *I drive* to show how the answer changes.
+**1:50 — Costs (30s).** **Costs**: the visit uses Medicare's real 2026 rate and the $283 Part B deductible, explained in plain sentences; getting there uses real road miles × the IRS rate. Change the deductible to $0 and watch the total drop to 20%.
 
-**2:00 — Insight + navigation (40s).** **Overview**: barrier cost (~$24 extra per visit because the nearest clinic is inaccessible) and "worth a phone call" for Midtown. **Access Gap Map**: hatched neighborhoods with no accessible option within 10 miles; Tab to a marker and press Enter. **Appointment Plan**: checklist with call scripts, tick an item, show the Access Card. Close with: "CareCost asks which provider can accommodate my needs while minimizing what care really costs."
+**2:20 — Plan (20s).** **Plan this visit**: the checklist with call scripts and the Access Card. Close: "CareCost finds care you can actually get to — and what it really costs."
 
-Tip: **Reset demo** in the sidebar restores the sample patient between runs.
+Tip: **Start over** in the sidebar clears everything between runs.

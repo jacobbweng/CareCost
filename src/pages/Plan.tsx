@@ -60,7 +60,7 @@ export function Plan() {
           </select>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-700">
             <StatusBadge status={target.status} compact />
-            <span>{SPECIALTY_BY_ID[p.specialty].service} · {target.cost.distanceMiles} mi · <Phone aria-hidden className="inline h-3.5 w-3.5" /> {p.phone} (fictional)</span>
+            <span>{SPECIALTY_BY_ID[p.specialty].service} · {target.cost.distanceMiles} mi · {p.phone ? <><Phone aria-hidden className="inline h-3.5 w-3.5" /> <span className="select-all">{p.phone}</span></> : null}</span>
           </div>
         </div>
         <div className="flex gap-8">

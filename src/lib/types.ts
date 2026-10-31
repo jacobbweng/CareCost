@@ -48,9 +48,10 @@ export type AccStatus = 'yes' | 'no' | 'unknown';
  * Where the information came from.
  * - verified:      confirmed by an on-site accessibility review (synthetic in demo)
  * - self_reported: stated by the provider, not independently checked
+ * - community:     mapped by OpenStreetMap volunteers (live data, unverified)
  * - none:          no information on file
  */
-export type InfoSource = 'verified' | 'self_reported' | 'none';
+export type InfoSource = 'verified' | 'self_reported' | 'community' | 'none';
 
 export interface AccRecord {
   status: AccStatus;
@@ -80,12 +81,27 @@ export interface Area {
 export interface Provider {
   id: string;
   name: string;
-  clinician: string;
+  clinician?: string;
   specialty: SpecialtyId;
-  areaId: string;
+  areaId?: string;
   address: string;
-  x: number;
-  y: number;
+  /** Schematic grid position (test fixtures / landing story only) */
+  x?: number;
+  y?: number;
+  /** Real-world position (live clinics) */
+  lat?: number;
+  lng?: number;
+  /** Road distance and drive time from the user (OSRM), when available */
+  roadMiles?: number;
+  driveMinutes?: number;
+  kind?: string;
+  website?: string;
+  hours?: string;
+  osmUrl?: string;
+  /** true = specialty tagged on the map, null = not listed, false = other specialty */
+  specialtyListed?: boolean | null;
+  /** Where the price estimate comes from */
+  priceSource?: string;
   /** Estimated in-network allowed amount for the specialty's priced service */
   allowedAmount: number;
   /** Listed self-pay (cash) price for the same service */
@@ -95,12 +111,12 @@ export interface Provider {
   /** Accessibility records. Missing => unknown / no information */
   access: Partial<Record<AccId, AccRecord>>;
   parkingCost: number; // per visit, for drivers
-  nearAccessibleTransit: boolean;
-  telehealthFollowUps: boolean;
-  newPatientWaitDays: number;
-  phone: string;
+  nearAccessibleTransit?: boolean;
+  telehealthFollowUps?: boolean;
+  newPatientWaitDays?: number;
+  phone?: string;
   overallVerifiedDate?: string;
-  blurb: string;
+  blurb?: string;
 }
 
 // ── Insurance ────────────────────────────────────────────────
@@ -110,7 +126,13 @@ export type EstimateMethod = 'copay' | 'deductible_coinsurance';
 export interface InsurancePlan {
   id: string;
   name: string;
-  kind: 'PPO' | 'HMO' | 'EPO' | 'Low-cost' | 'Self-pay' | 'Unknown' | 'Custom';
+  kind: 'PPO' | 'HMO' | 'EPO' | 'Low-cost' | 'Self-pay' | 'Unknown' | 'Custom' | 'Private' | 'Medicare' | 'Medicaid';
+  /** Multiplier applied to a provider's benchmark (Medicare) price to estimate this payer's allowed amount */
+  priceMultiplier?: number;
+  /** Shown in the plan picker */
+  short?: string;
+  /** Hidden from the plan picker (legacy sample plans kept for tests) */
+  hidden?: boolean;
   description: string;
   method: EstimateMethod | 'self_pay' | 'unknown';
   copay: number | null;
@@ -186,9 +208,19 @@ export interface CostBreakdown {
 
 // ── Profile ─────────────────────────────────────────────────
 
+export interface UserLocation {
+  lat: number;
+  lng: number;
+  label: string; // e.g. "Lawrenceville, Georgia"
+  zip?: string;
+  accuracyM?: number;
+}
+
 export interface Profile {
   name: string;
   zip: string;
+  /** Real device location, only when the user chooses to share it. Stays on this device. */
+  location?: UserLocation | null;
   homeAreaId: string;
   specialty: SpecialtyId;
   planId: string;

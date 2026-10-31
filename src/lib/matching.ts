@@ -148,7 +148,9 @@ export function matchProviders(
           );
         } else {
           reasons.push(
-            `Meets ${confirmedEss.length} of ${b.essentials.length} essential requirements; ${listJoin(unverified.map((u) => label(u.id)))} not yet reported.`,
+            confirmedEss.length
+              ? `Meets ${confirmedEss.length} of ${b.essentials.length} must-haves; ask about ${listJoin(unverified.map((u) => label(u.id).toLowerCase()))}.`
+              : `No information yet on ${listJoin(unverified.map((u) => label(u.id).toLowerCase()))} — call to ask.`,
           );
         }
       }
@@ -166,6 +168,9 @@ export function matchProviders(
       const selfReported = b.essentials.filter((c) => c.status === 'yes' && c.source === 'self_reported');
       if (selfReported.length)
         cautions.push(`${listJoin(selfReported.map((c) => label(c.id)))} reported by the provider, not independently verified.`);
+      const community = b.essentials.filter((c) => c.status === 'yes' && c.source === 'community');
+      if (community.length)
+        cautions.push(`${listJoin(community.map((c) => label(c.id)))} mapped by OpenStreetMap volunteers — confirm when you call.`);
       const stale = b.essentials.filter((c) => c.status === 'yes' && isStale(c.date, now));
       if (stale.length) cautions.push(`Accessibility information last updated over a year ago (${fmtDate(stale[0].date)}).`);
       if (overBudget) cautions.push(`Estimated total ${usd(b.cost.total)} is above your ${usd(profile.budget ?? 0)} budget.`);
@@ -250,7 +255,7 @@ export function barrierInsight(results: MatchResult[], recommended: MatchResult 
 }
 
 export const STATUS_META: Record<MatchStatus, { label: string; short: string }> = {
-  meets: { label: 'Meets requirements', short: 'Meets' },
-  needs_verification: { label: 'Needs verification', short: 'Verify' },
-  does_not_meet: { label: 'Does not meet requirements', short: 'Does not meet' },
+  meets: { label: 'Has your must-haves', short: 'Meets' },
+  needs_verification: { label: 'Call to check', short: 'Verify' },
+  does_not_meet: { label: 'Missing a must-have', short: 'Does not meet' },
 };
